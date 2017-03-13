@@ -1,8 +1,8 @@
-## Python MIPS Assembler
+# Python MIPS Assembler
 
 Assembler for MIPS. Convert MIPS to Binary or Hex.
 Built at Union College, NY, for CSC-270: Computer Organization, Winter 2017.
 
-# How to use:
+## How to use:
 
 python Assembler.py <input.asm> <output.(hex/bin)>
