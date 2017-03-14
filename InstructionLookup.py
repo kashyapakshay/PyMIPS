@@ -7,7 +7,8 @@ class InstructionLookup:
         		'or': 2,
         		'sub': 3,
         		'sgt': 14,
-        		'slt': 13
+        		'slt': 13,
+                'mult': 17
         	},
         	'I-TYPE': {
         		'addi': 4,
@@ -23,8 +24,8 @@ class InstructionLookup:
         	},
         	'J-TYPE': {
         		'j': 16,
-        		'jal': 17,
-        		'jr': 18
+        		'jal': 18,
+        		'jr': 19
         	}
         }
 
