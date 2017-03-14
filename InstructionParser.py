@@ -47,7 +47,7 @@ class JTypeInstruction(BaseInstruction):
         return super(JTypeInstruction, self).parseInstr(instr)
 
 class InstructionParser:
-    def __init__(self):
+    def __init__(self, labelsMap={}):
         self.instrObjMap = {
             'R-TYPE': RTypeInstruction,
             'I-TYPE': ITypeInstruction,
@@ -59,21 +59,24 @@ class InstructionParser:
             'hex': lambda s, n: Utils.bs2hex(Utils.int2bs(s, n))
         }
 
+        self.labelsMap = labelsMap
+
         self.instrLookup = InstructionLookup()
         self.instrObj = None
 
-    def removeComments(self, instr):
+    def extractLabels(self, instr):
         if not instr:
-            return ''
+            return '', ''
 
-        cleaned = instr
-        if instr.find('#') != -1:
-    		cleaned = instr[0:instr.find('#')] # Get rid of anything after a comment.
+        split = instr.split(':', 1)
 
-        return cleaned
+        if len(split) < 2:
+            return '', instr
+
+        return split[0], split[1].strip()
 
     def parse(self, instr):
-        instr = self.removeComments(instr)
+        label, instr = self.extractLabels(instr)
         if not instr:
             return '', '', None
 
@@ -84,6 +87,14 @@ class InstructionParser:
 
         instrObj = self.instrObjMap[instrType]()
         operator, operands = instrObj.parseInstr(instr)
+
+        if label:
+            operands = list(operands)
+            if label not in self.labelsMap:
+                operands[-1] = None
+
+            operands[-1] = str(self.labelsMap[label])
+            operands = tuple(operands)
 
         return instrType, operator, operands
 

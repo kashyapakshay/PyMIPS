@@ -6,33 +6,60 @@
 # =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 
 import sys
+import getopt
 
 from InstructionParser import InstructionParser
 
 class Assembler(object):
-	def __init__(self, infilename, outfilename):
-		self.infilename = infilename
+	def __init__(self, infilenames, outfilename):
+		self.infilenames = infilenames
 		self.outfilename = outfilename
 
-		self.parser = InstructionParser()
+	def stripComments(self, line):
+		if not line:
+			return ''
+
+		cleaned = line
+		if line.find('#') != -1:
+			cleaned = line[0:line.find('#')] # Get rid of anything after a comment.
+
+		return cleaned
+
+	def buildLabelsMap(self, lines):
+		labelsMap = {}
+
+		for lineNo, line in enumerate(lines):
+			split = line.split(':', 1)
+			if len(split) > 1:
+				label = split[0]
+				labelsMap[label] = lineNo
+
+		return labelsMap
+
+	def mergeInputFiles(self):
+		outlines = []
+
+		for filename in self.infilenames:
+			with open(filename) as f:
+				outlines += f.readlines()
+
+			f.close()
+
+		return outlines
 
 	def AssemblyToHex(self):
 		'''given an ascii assembly file , read it in line by line and convert each line of assembly to machine code
 		then save that machinecode to an outputfile'''
+		inlines = self.mergeInputFiles()
 		outlines = []
-		with open(self.infilename) as f:
-			lines = [line.rstrip() for line in f.readlines()]  #get rid of \n whitespace at end of line
-			#if you are a python ninja, use list comprehension. and replace the for loop below
-			# with this expression
-			#outlines = [ConvertAssemblyToMachineCode(curline) for curline in lines]
-			# but, no judgement if you prefer explicit for loops
-			for curline in lines:
-				print curline
-				outstring = self.parser.convert(curline, format='hex')
-				if outstring != '':
-					outlines.append(outstring)
 
-		f.close()
+		lines = map(lambda line: self.stripComments(line.rstrip()), inlines)  #get rid of \n whitespace at end of line
+		lines = filter(lambda line: line, lines)
+
+		labelsMap = self.buildLabelsMap(lines)
+		parser = InstructionParser(labelsMap=labelsMap)
+
+		outlines = map(lambda line: parser.convert(line, format='hex'), lines)
 
 		with open(self.outfilename,'w') as of:
 			of.write('v2.0 raw\n')
@@ -42,22 +69,24 @@ class Assembler(object):
 		of.close()
 
 if __name__ == "__main__":
-	#in order to run this with command-line arguments
-	# we need this if __name__ clause
-	# and then we need to read in the subsequent arguments in a list.
-
-	#### These two lines show you how to iterate through arguments ###
-	#### You can remove them when writing your own assembler
 	print 'Number of arguments:', len(sys.argv), 'arguments.'
 	print 'Argument List:', str(sys.argv)
 
-	## This is error checking to make sure the correct number of arguments were used
-	## you'll have to change this if your assembler takes more or fewer args
-	if (len(sys.argv) != 3):
-		print('usage: python akshay-assembler.py inputfile.asm outputfile.hex')
-		exit(0)
-	inputfile = sys.argv[1]
-	outputfile = sys.argv[2]
+	# try:
+	# 	opts, args = getopt.getopt(sys.argv[1:], "hi:o:", ["ifile=","ofile="])
+    # except getopt.GetoptError:
+	# 	print 'Usage: python Assembler.py -i <inputfile.asm>[ <inputfile2.asm> <inputfile3.asm> ...] -o <outputfile.hex>'
+	# 	sys.exit(2)
+	#
+	# inputfiles = map(lambda t: t[1], filter(lambda (opt, arg): opt == '-i', opts))
+	# outputfile = map(lambda t: t[1], filter(lambda (opt, arg): opt == '-o', opts))
 
-	assembler = Assembler(inputfile, outputfile)
+	if (len(sys.argv) < 5) or ('-i' not in sys.argv) or ('-o' not in sys.argv):
+		print('Usage: python Assembler.py -i <inputfile.asm>[ <inputfile2.asm> <inputfile3.asm> ...] -o <outputfile.hex>')
+		sys.exit(2)
+
+	inputfiles = sys.argv[sys.argv.index('-i') + 1: sys.argv.index('-o')]
+	outputfile = sys.argv[sys.argv.index('-o') + 1]
+
+	assembler = Assembler(inputfiles, outputfile)
 	assembler.AssemblyToHex()
