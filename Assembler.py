@@ -81,7 +81,7 @@ if __name__ == "__main__":
 	# inputfiles = map(lambda t: t[1], filter(lambda (opt, arg): opt == '-i', opts))
 	# outputfile = map(lambda t: t[1], filter(lambda (opt, arg): opt == '-o', opts))
 
-	if (len(sys.argv) < 5) or ('-i' not in sys.argv) or ('-o' not in sys.argv):
+	if (len(sys.argv) < 4) or ('-i' not in sys.argv) or ('-o' not in sys.argv):
 		print('Usage: python Assembler.py -i <inputfile.asm>[ <inputfile2.asm> <inputfile3.asm> ...] -o <outputfile.hex>')
 		sys.exit(2)
 
